@@ -1,4 +1,5 @@
 from ticketflow.models.audit import AuditLog
+from ticketflow.models.auth import AuthSession
 from ticketflow.models.base import Base
 from ticketflow.models.booking import Order, OrderItem, ReservationGroup, Ticket, TicketReservation
 from ticketflow.models.catalog import Event, EventSeat, Seat, Section, TicketType, User, Venue
@@ -13,6 +14,7 @@ from ticketflow.models.enums import (
 
 __all__ = [
     "AuditLog",
+    "AuthSession",
     "Base",
     "Event",
     "EventCategory",

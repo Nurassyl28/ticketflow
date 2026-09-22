@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     app_name: str = "TicketFlow"
     database_url: PostgresDsn = Field(repr=False)
+    auth_token_ttl_minutes: int = Field(default=15, ge=1, le=120)
 
     @field_validator("database_url")
     @classmethod
