@@ -1,9 +1,14 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from ticketflow.access import orders_router, organizer_router
+from ticketflow.auth.router import admin_router
+from ticketflow.auth.router import router as auth_router
 from ticketflow.config import Settings
 from ticketflow.database import build_engine
 from ticketflow.health import router as health_router
@@ -22,5 +27,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await run_in_threadpool(engine.dispose)
 
     app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
+    app.state.settings = settings
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, error: RequestValidationError) -> JSONResponse:
+        # Never echo submitted passwords/tokens in validation responses.
+        details = [{key: item[key] for key in ("loc", "msg", "type")} for item in error.errors()]
+        return JSONResponse(status_code=422, content={"detail": details})
+
     app.include_router(health_router)
+    app.include_router(auth_router)
+    app.include_router(admin_router)
+    app.include_router(orders_router)
+    app.include_router(organizer_router)
     return app
