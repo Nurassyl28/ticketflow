@@ -1,15 +1,22 @@
 import os
 from collections.abc import Iterator
+from datetime import timedelta
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Connection, Engine, create_engine
+from fastapi.testclient import TestClient
+from sqlalchemy import Connection, Engine, create_engine, func, insert, select, update
 from sqlalchemy.pool import NullPool
 
-from ticketflow.seed import seed_demo
+from ticketflow.auth.security import hash_password, new_token, token_digest
+from ticketflow.config import Settings
+from ticketflow.database import get_engine
+from ticketflow.main import create_app
+from ticketflow.models import AuthSession, User, UserRole
+from ticketflow.seed import demo_id, seed_demo
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -61,3 +68,60 @@ def catalog(migrated_engine: Engine) -> Iterator[Connection]:
     with migrated_engine.begin() as connection:
         seed_demo(connection)
         yield connection
+
+
+@pytest.fixture(scope="session")
+def api_password_hash():
+    return hash_password("TicketFlow integration password")
+
+
+@pytest.fixture
+def api_headers(migrated_engine, api_password_hash):
+    headers = {}
+    with migrated_engine.begin() as connection:
+        seed_demo(connection)
+        now = connection.scalar(select(func.clock_timestamp()))
+        for name, role in [
+            ("customer", UserRole.CUSTOMER),
+            ("organizer", UserRole.ORGANIZER),
+            ("admin", UserRole.ADMIN),
+            ("buyer2", UserRole.CUSTOMER),
+            ("outsider", UserRole.ORGANIZER),
+        ]:
+            user_id = demo_id(name)
+            if name in ("buyer2", "outsider"):
+                connection.execute(
+                    insert(User).values(
+                        id=user_id,
+                        email=f"{name}@example.com",
+                        role=role,
+                        password_hash=api_password_hash,
+                    )
+                )
+            else:
+                connection.execute(
+                    update(User)
+                    .where(User.id == user_id)
+                    .values(email=f"{name}@example.com", password_hash=api_password_hash)
+                )
+            token = new_token()
+            connection.execute(
+                insert(AuthSession).values(
+                    token_hash=token_digest(token),
+                    user_id=user_id,
+                    created_at=now,
+                    expires_at=now + timedelta(hours=1),
+                )
+            )
+            headers[name] = {"Authorization": f"Bearer {token}"}
+    return headers
+
+
+@pytest.fixture
+def api(migrated_engine, api_headers):
+    app = create_app(
+        Settings(_env_file=None, database_url="postgresql+psycopg://test:test@127.0.0.1:1/test")
+    )
+    app.dependency_overrides[get_engine] = lambda: migrated_engine
+    with TestClient(app) as client:
+        yield client
