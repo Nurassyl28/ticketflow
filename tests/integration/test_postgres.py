@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.engine import make_url
@@ -8,14 +6,6 @@ from ticketflow.config import Settings
 from ticketflow.main import create_app
 
 pytestmark = pytest.mark.integration
-
-
-@pytest.fixture
-def database_url() -> str:
-    url = os.getenv("TEST_DATABASE_URL")
-    if not url:
-        pytest.fail("Set TEST_DATABASE_URL or run pytest -m 'not integration'")
-    return url
 
 
 def test_readiness_with_real_postgres(database_url: str) -> None:
