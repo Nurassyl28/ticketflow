@@ -9,6 +9,7 @@ from starlette.concurrency import run_in_threadpool
 from ticketflow.access import orders_router, organizer_router
 from ticketflow.auth.router import admin_router
 from ticketflow.auth.router import router as auth_router
+from ticketflow.cancellations import router as cancellations_router
 from ticketflow.catalog import router as catalog_router
 from ticketflow.checkout import router as checkout_router
 from ticketflow.config import Settings
@@ -48,4 +49,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(reservations_router)
     app.include_router(checkout_router)
     app.include_router(tickets_router)
+    app.include_router(cancellations_router)
     return app
