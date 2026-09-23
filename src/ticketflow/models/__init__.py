@@ -11,8 +11,10 @@ from ticketflow.models.enums import (
     TicketStatus,
     UserRole,
 )
+from ticketflow.models.payment import Payment
 
 __all__ = [
+    "Payment",
     "AuditLog",
     "AuthSession",
     "Base",
