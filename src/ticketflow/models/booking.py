@@ -86,6 +86,7 @@ class Order(UUIDPrimaryKey, CreatedAt, Base):
             ["reservation_groups.id", "reservation_groups.user_id", "reservation_groups.event_id"],
         ),
         UniqueConstraint("reservation_group_id"),
+        UniqueConstraint("id", "user_id", name="uq_orders_id_user"),
         UniqueConstraint("id", "reservation_group_id", "event_id", name="uq_orders_item_reference"),
         money_check("total_amount"),
         CheckConstraint("currency = 'KZT'", name="currency_kzt"),

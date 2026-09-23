@@ -1,6 +1,6 @@
 # Схема БД TicketFlow
 
-Этапы 2–3: 14 таблиц SQLAlchemy, миграции Alembic `0001`–`0002` и повторяемый seed.
+15 таблиц SQLAlchemy, миграции Alembic `0001`–`0003` и повторяемый seed.
 Исходное [ТЗ](spec.md) сохранено; уточнения схемы реализуют [план](plan.md).
 
 ## Таблицы
@@ -18,6 +18,7 @@
 | `reservation_groups` | Общие владелец, событие и срок брони нескольких мест |
 | `ticket_reservations` | Строки брони с полями ТЗ и ссылкой на группу |
 | `orders` | Один заказ на группу брони, владелец, событие, сумма и статус |
+| `payments` | Одна mock-оплата заказа, сумма, ключ повторов пользователя и время возврата |
 | `order_items` | Забронированные места заказа, снимок цены и названия тарифа |
 | `tickets` | Ссылка на позицию заказа, событие, место, уникальный QR UUID и статус |
 | `audit_logs` | Действие, сущность, пользователь или системное действие, время и IP |
@@ -39,6 +40,7 @@ erDiagram
     event_seats ||--o{ ticket_reservations : holds
     reservation_groups ||--o| orders : becomes
     orders ||--o{ order_items : includes
+    orders ||--o| payments : paid_by
     ticket_reservations ||--o| order_items : supplies
     order_items ||--o| tickets : issues
     users o|--o{ audit_logs : acts
