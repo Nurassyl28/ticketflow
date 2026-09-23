@@ -56,3 +56,7 @@ jobs:
         run: uv run --locked alembic check
       - name: Seed demo catalog
         run: uv run --locked python -m ticketflow.seed
+      - name: Run complete API demonstration
+        run: uv run --locked python -m scripts.demo
+      - name: Run expiry worker once
+        run: uv run --locked python -m ticketflow.worker --once
