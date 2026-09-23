@@ -13,6 +13,7 @@ from ticketflow.catalog import router as catalog_router
 from ticketflow.config import Settings
 from ticketflow.database import build_engine
 from ticketflow.health import router as health_router
+from ticketflow.reservations import router as reservations_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -42,4 +43,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(orders_router)
     app.include_router(organizer_router)
     app.include_router(catalog_router)
+    app.include_router(reservations_router)
     return app
